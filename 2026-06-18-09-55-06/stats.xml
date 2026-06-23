@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-06-18T10:36:39.837484+05:30 by Eclipse SUMO GUI 1.27.0
+<!-- generated on 2026-06-23T12:34:52.676475+05:30 by Eclipse SUMO GUI 1.27.0
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
-        <net-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\osm.net.xml.gz"/>
-        <route-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\osm.passenger.trips.xml"/>
-        <additional-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\osm.poly.xml.gz,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\output.add.xml"/>
+        <net-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.net.xml.gz"/>
+        <route-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.passenger.trips.xml"/>
+        <additional-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.poly.xml.gz,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\output.add.xml"/>
     </input>
 
     <output>
-        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\tripinfos.xml"/>
-        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\stats.xml"/>
+        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\tripinfos.xml"/>
+        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\stats.xml"/>
     </output>
 
     <processing>
@@ -31,11 +31,25 @@
     </report>
 
     <traci_server>
-        <remote-port value="51468"/>
+        <remote-port value="60186"/>
     </traci_server>
 
     <gui_only>
-        <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sumo-eclipse\2026-06-18-09-55-06\osm.view.xml"/>
+        <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.view.xml"/>
     </gui_only>
 
 </sumoConfiguration>
+-->
+
+<statistics xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/statistic_file.xsd">
+    <performance clockBegin="14193.56" clockEnd="14479.04" clockDuration="285.49" traciDuration="4.34" realTimeFactor="0.76" vehicleUpdatesPerSecond="20.62" personUpdatesPerSecond="0.00" begin="0.00" end="218.00" duration="218.00"/>
+    <vehicles loaded="144" inserted="77" running="37" waiting="0"/>
+    <teleports total="0" jam="0" yield="0" wrongLane="0"/>
+    <safety collisions="0" emergencyStops="0" emergencyBraking="0"/>
+    <persons loaded="0" running="0" jammed="0"/>
+    <personTeleports total="0" abortWait="0" wrongDest="0"/>
+    <vehicleTripStatistics count="40" routeLength="1109.96" speed="11.95" duration="91.90" waitingTime="1.02" timeLoss="23.84" departDelay="0.62" departDelayWaiting="-1.00" totalTravelTime="3676.00" totalDepartDelay="24.68"/>
+    <pedestrianStatistics number="0" routeLength="0.00" duration="0.00" timeLoss="0.00"/>
+    <rideStatistics number="0"/>
+    <transportStatistics number="0"/>
+</statistics>
