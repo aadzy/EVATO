@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-06-27T11:41:42.214840+05:30 by Eclipse SUMO GUI 1.27.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Projects\EVATO\Bangalore_Map\osm.net.xml.gz"/>
+        <route-files value="C:\Projects\EVATO\Bangalore_Map\osm.passenger.trips.xml"/>
+        <additional-files value="C:\Projects\EVATO\Bangalore_Map\osm.poly.xml.gz,C:\Projects\EVATO\Bangalore_Map\output.add.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="C:\Projects\EVATO\Bangalore_Map\tripinfos.xml"/>
+        <statistic-output value="C:\Projects\EVATO\Bangalore_Map\stats.xml"/>
+    </output>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+        <time-to-teleport value="-1"/>
+        <tls.actuated.jam-threshold value="30"/>
+    </processing>
+
+    <routing>
+        <device.rerouting.adaptation-steps value="18"/>
+        <device.rerouting.adaptation-interval value="10"/>
+    </routing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="55002"/>
+    </traci_server>
+
+    <gui_only>
+        <gui-settings-file value="C:\Projects\EVATO\Bangalore_Map\osm.view.xml"/>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+    </gui_only>
+
+</sumoConfiguration>

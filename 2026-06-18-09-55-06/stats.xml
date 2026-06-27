@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-06-27T10:32:45.786370+05:30 by Eclipse SUMO GUI 1.27.0
+<!-- generated on 2026-06-27T10:45:52.395214+05:30 by Eclipse SUMO GUI 1.27.0
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
-        <net-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.net.xml.gz"/>
-        <route-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.passenger.trips.xml"/>
-        <additional-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.poly.xml.gz,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\output.add.xml"/>
+        <net-file value="C:\Projects\EVATO\2026-06-18-09-55-06\osm.net.xml.gz"/>
+        <route-files value="C:\Projects\EVATO\2026-06-18-09-55-06\osm.passenger.trips.xml"/>
+        <additional-files value="C:\Projects\EVATO\2026-06-18-09-55-06\osm.poly.xml.gz,C:\Projects\EVATO\2026-06-18-09-55-06\output.add.xml"/>
     </input>
 
     <output>
-        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\tripinfos.xml"/>
-        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\stats.xml"/>
+        <tripinfo-output value="C:\Projects\EVATO\2026-06-18-09-55-06\tripinfos.xml"/>
+        <statistic-output value="C:\Projects\EVATO\2026-06-18-09-55-06\stats.xml"/>
     </output>
 
     <processing>
@@ -32,11 +32,11 @@
     </report>
 
     <traci_server>
-        <remote-port value="56226"/>
+        <remote-port value="50925"/>
     </traci_server>
 
     <gui_only>
-        <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\Vac_base\2026-06-18-09-55-06\osm.view.xml"/>
+        <gui-settings-file value="C:\Projects\EVATO\2026-06-18-09-55-06\osm.view.xml"/>
         <quit-on-end value="true"/>
         <start value="true"/>
     </gui_only>
@@ -45,13 +45,13 @@
 -->
 
 <statistics xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/statistic_file.xsd">
-    <performance clockBegin="176559.76" clockEnd="176590.24" clockDuration="30.48" traciDuration="9.71" realTimeFactor="11.48" vehicleUpdatesPerSecond="350.73" personUpdatesPerSecond="0.00" begin="0.00" end="350.00" duration="350.00"/>
-    <vehicles loaded="144" inserted="123" running="37" waiting="0"/>
+    <performance clockBegin="227625.92" clockEnd="227740.38" clockDuration="114.46" traciDuration="22.36" realTimeFactor="31.45" vehicleUpdatesPerSecond="1096.31" personUpdatesPerSecond="0.00" begin="0.00" end="3600.00" duration="3600.00"/>
+    <vehicles loaded="1272" inserted="1271" running="31" waiting="0"/>
     <teleports total="0" jam="0" yield="0" wrongLane="0"/>
     <safety collisions="0" emergencyStops="0" emergencyBraking="0"/>
     <persons loaded="0" running="0" jammed="0"/>
     <personTeleports total="0" abortWait="0" wrongDest="0"/>
-    <vehicleTripStatistics count="86" routeLength="1207.56" speed="12.21" duration="97.74" waitingTime="1.19" timeLoss="26.83" departDelay="0.55" departDelayWaiting="-1.00" totalTravelTime="8406.00" totalDepartDelay="47.43"/>
+    <vehicleTripStatistics count="1240" routeLength="1213.05" speed="12.06" duration="99.90" waitingTime="1.50" timeLoss="27.13" departDelay="0.54" departDelayWaiting="-1.00" totalTravelTime="123877.00" totalDepartDelay="664.60"/>
     <pedestrianStatistics number="0" routeLength="0.00" duration="0.00" timeLoss="0.00"/>
     <rideStatistics number="0"/>
     <transportStatistics number="0"/>

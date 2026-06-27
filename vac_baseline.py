@@ -20,7 +20,19 @@ from sumoITScontrol import Intersection  # noqa: E402
 from sumoITScontrol.control.intersection_management import MaxPressure_Flex  # noqa: E402
 
 
-DEFAULT_CONFIG_FILE = BASE_DIR / "2026-06-18-09-55-06" / "osm.sumocfg"
+def _resolve_default_config_file() -> Path:
+    candidates = [
+        BASE_DIR / "Bangalore_Map" / "osm.sumocfg",
+        BASE_DIR / "Bangalore_Map" / "osm.sumocfg.xml",
+        BASE_DIR / "2026-06-18-09-55-06" / "osm.sumocfg",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return BASE_DIR / "Bangalore_Map" / "osm.sumocfg.xml"
+
+
+DEFAULT_CONFIG_FILE = _resolve_default_config_file()
 DEFAULT_OUTPUT_FILE = BASE_DIR / "baseline_metrics.csv"
 
 
