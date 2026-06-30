@@ -1,0 +1,5 @@
+python_interpreter = "/Users/sachindev/sumo-env/bin/python3"
+site-package-path = [
+  "/Users/sachindev/sumo-env/lib/python3.13/site-packages",
+  "/Users/sachindev/sumoITScontrol"
+]

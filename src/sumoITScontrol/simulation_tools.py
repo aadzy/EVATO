@@ -67,4 +67,11 @@ class SimulationTools:
 
     @staticmethod
     def get_lane_length_preloaded(lane_id):
-        return SimulationTools.lane_lengths.get(lane_id)
+        if not lane_id in SimulationTools.lane_lengths:
+            try:
+                import traci
+                val = traci.lane.getLength(lane_id)
+                SimulationTools.lane_lengths[lane_id] = val
+            except Exception:
+                return 10.0
+        return SimulationTools.lane_lengths.get(lane_id, 10.0)

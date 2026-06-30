@@ -2,5 +2,9 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "ms-python.black-formatter",
   "python-envs.defaultEnvManager": "ms-python.python:system",
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+  "python.defaultInterpreterPath": "/Users/sachindev/sumo-env/bin/python3",
+  "python.analysis.extraPaths": [
+    "./src"
+  ]
 }

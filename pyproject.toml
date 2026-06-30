@@ -29,3 +29,11 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.pyrefly]
+python_interpreter = "/Users/sachindev/sumo-env/bin/python3"
+site-package-path = [
+  "/Users/sachindev/sumo-env/lib/python3.13/site-packages",
+  "/Users/sachindev/sumoITScontrol",
+  "/Users/sachindev/sumoITScontrol/src"
+]

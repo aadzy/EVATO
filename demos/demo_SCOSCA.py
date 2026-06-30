@@ -5,37 +5,66 @@ The SCOSCA controller dynamically adjusts the green times of the traffic signals
 """
 
 ############## IMPORTS
+import os
+os.environ["QT_X11_NO_MITSHM"] = "1"
+os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
+os.environ["DYLD_LIBRARY_PATH"] = "/opt/homebrew/opt/mesa/lib:" + os.environ.get("DYLD_LIBRARY_PATH", "")
+os.environ["FONTCONFIG_FILE"] = "/opt/X11/etc/X11/fontconfig/fonts.conf"
+os.environ["FONTCONFIG_PATH"] = "/opt/X11/etc/X11/fontconfig"
+os.environ["PROJ_LIB"] = "/Library/Frameworks/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/framework/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/share/proj"
+os.environ["PROJ_DATA"] = "/Library/Frameworks/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/framework/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/share/proj"
 import traci
 from datetime import datetime
 import warnings
+import argparse
 
 warnings.filterwarnings("ignore")
 
 from sumoITScontrol import Intersection, IntersectionGroup
 from sumoITScontrol.control.intersection_management.ScootScats import ScootScats
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description="Run SCOSCA simulation.")
+parser.add_argument("--headless", action="store_true", help="Run SUMO in headless mode")
+parser.add_argument("--gui-delay", type=int, default=100, help="Delay in milliseconds between GUI steps")
+args, unknown = parser.parse_known_args()
+
 ############## PARAMETERS
 simulation_parameters = {
     "sumo_config_file": "./demos/demo_simulation_models/example_intersection_management/Configuration.sumocfg",
-    "duration_sec": 3600,#86400 - 32400,  # 24h - 9h
+    "duration_sec": 3000,#86400 - 32400,  # 24h - 9h
     "time_step": 0.25,
     "start_time": datetime.strptime("09:00", "%H:%M"),
     "sumo_random_seed": 2,
 }
 
 # SUMO
-SUMO_BINARY = "/Users/sachindev/sumo-env/bin/sumo-gui"
-SUMO_CMD = [
-    SUMO_BINARY,
-    "-c",
-    simulation_parameters["sumo_config_file"],
-    "--start",
-    "--quit-on-end",
-    "--time-to-teleport",
-    "-1",
-    "--seed",
-    str(simulation_parameters["sumo_random_seed"]),
-]
+if args.headless:
+    SUMO_BINARY = "/Users/sachindev/sumo-env/bin/sumo"
+    SUMO_CMD = [
+        SUMO_BINARY,
+        "-c",
+        simulation_parameters["sumo_config_file"],
+        "--time-to-teleport",
+        "-1",
+        "--seed",
+        str(simulation_parameters["sumo_random_seed"]),
+    ]
+else:
+    SUMO_BINARY = "/Applications/SUMO sumo-gui.app/Contents/MacOS/SUMO sumo-gui"
+    SUMO_CMD = [
+        SUMO_BINARY,
+        "-c",
+        simulation_parameters["sumo_config_file"],
+        "--start",
+        "--delay",
+        str(args.gui_delay),
+        "--time-to-teleport",
+        "-1",
+        "--seed",
+        str(simulation_parameters["sumo_random_seed"]),
+    ]
+
 
 # DEFINE INTERSECTIONS and CONTROLLER
 intersection1 = Intersection(
@@ -226,22 +255,38 @@ controller = ScootScats(
 
 
 ######## SIMULATION
-# Start Sumo
-traci.start(SUMO_CMD)
-# Initialize
-intersection_group._init_lane_lengths()
-# Execute Simulation
-for simulation_timestep in range(
-    0, int(simulation_parameters["duration_sec"] / simulation_parameters["time_step"])
-):
-    # run one step
-    traci.simulationStep()
-    current_time = traci.simulation.getCurrentTime()
-    # execute control
-    controller.execute_control(current_time)
-# Stop Sumo
-traci.close()
+print("Using SUMO binary:", SUMO_BINARY)
+print("SUMO command:", SUMO_CMD)
 
+# Start SUMO
+traci.start(SUMO_CMD, numRetries=400)
+print("TraCI connected successfully")
+
+# Allow GUI to load completely
+if not args.headless:
+    import time
+    print("Waiting 5 seconds for SUMO GUI to initialize...")
+    time.sleep(5.0)
+
+# Initialize lane lengths
+intersection_group._init_lane_lengths()
+
+# Execute simulation
+for simulation_timestep in range(
+    0,
+    int(simulation_parameters["duration_sec"] / simulation_parameters["time_step"])
+):
+    traci.simulationStep()
+    if not args.headless:
+        import time
+        time.sleep(args.gui_delay / 1000.0)
+    current_time = traci.simulation.getCurrentTime()
+    controller.execute_control(current_time)
+
+print("Simulation finished successfully")
+
+# Stop SUMO
+traci.close()
 
 ######## VISUALIZATION
 import matplotlib.pyplot as plt
@@ -253,12 +298,24 @@ from collections import defaultdict
 def generate_spat_figure(controller, intersection_name,
                          xlim=(20502.750402160993, 20502.75300752443)):
     data = controller.measurement_data["history_greentimes"]
+
+    if not data:
+        print(f"No SCOSCA history available for {intersection_name}")
+        return
     # Extract timestamps
     timestamps_ms = [d[0] for d in data]
     # Extract green times only for selected intersection
     green_data = [d[1][intersection_name] for d in data]
-    # Determine number of phases dynamically
+
+    if not green_data:
+        print(f"No green data for {intersection_name}")
+        return
+
     num_phases = len(green_data[0])
+
+    #green_data = [d[1][intersection_name] for d in data]
+    # Determine number of phases dynamically
+    #num_phases = len(green_data[0])
     unique_phases = list(range(1, num_phases + 1))
     # Convert timestamps to datetime
     base_time = datetime(2026, 2, 18, 9, 0, 0)
@@ -328,6 +385,9 @@ def generate_spat_figure(controller, intersection_name,
 
 def generate_schedule_figure(controller):
     data = controller.measurement_data["history_greentimes"]
+    if not data:
+        print("No schedule data recorded.")
+        return
     # Extract timestamps
     timestamps_ms = [d[0] for d in data]
     # Convert timestamps to datetime
@@ -380,10 +440,10 @@ def generate_schedule_figure(controller):
     plt.tight_layout()
     plt.show()
 
-generate_spat_figure(controller, "intersection1", xlim=(20502.776855004264, 20502.7794603677))
-generate_spat_figure(controller, "intersection2", xlim=(20502.776855004264, 20502.7794603677))
-generate_spat_figure(controller, "intersection3", xlim=(20502.776855004264, 20502.7794603677))
-generate_spat_figure(controller, "intersection4", xlim=(20502.776855004264, 20502.7794603677))
-generate_spat_figure(controller, "intersection5", xlim=(20502.776855004264, 20502.7794603677))
+#generate_spat_figure(controller, "intersection1", xlim=(20502.776855004264, 20502.7794603677))
+#generate_spat_figure(controller, "intersection2", xlim=(20502.776855004264, 20502.7794603677))
+#generate_spat_figure(controller, "intersection3", xlim=(20502.776855004264, 20502.7794603677))
+#generate_spat_figure(controller, "intersection4", xlim=(20502.776855004264, 20502.7794603677))
+#generate_spat_figure(controller, "intersection5", xlim=(20502.776855004264, 20502.7794603677))
 
-generate_schedule_figure(controller)
+#generate_schedule_figure(controller)
