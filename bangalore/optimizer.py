@@ -4,6 +4,15 @@ import copy
 class BangaloreSCOSCAOptimizer:
     def __init__(self, params):
         self.params = params
+        # Per-district hysteresis state for priority-route direction (CoSiCoSt
+        # "establish a priority route" step), and per-intersection next-hop on
+        # the currently chosen priority route (feeds the "adjust the priority
+        # stage" boost in optimize_green_splits).
+        self._priority_direction = {}
+        self._priority_next_tl = {}
+
+    def get_priority_next_tl(self, tl_id):
+        return self._priority_next_tl.get(tl_id)
 
     def optimize_cycle_lengths(self, districts, district_tls, degree_of_sat, current_cycle_lengths):
         # We optimize the cycle length for each district independently
@@ -32,16 +41,20 @@ class BangaloreSCOSCAOptimizer:
                 
         return new_cycle_lengths
 
-    def optimize_green_splits(self, intersections, queue_lengths, degree_of_sat, current_greentimes, cycle_lengths, previous_effective_cycles, district_mappings):
+    def optimize_green_splits(self, intersections, queue_lengths, degree_of_sat, current_greentimes, cycle_lengths, previous_effective_cycles, district_mappings, priority_lanes=None):
         # Optimize green splits for each intersection
         new_greentimes = {}
         new_previous_effective_cycles = {}
-        
+        priority_lanes = priority_lanes or {}
+        priority_boost = self.params.get("priority_stage_boost", 0.0)
+
         for intersection in intersections:
             tl_id = intersection.tl_id
             greens = list(current_greentimes.get(tl_id, []))
             if not greens:
                 continue
+
+            tl_priority_lanes = set(priority_lanes.get(tl_id, []))
                 
             district_name = district_mappings.get(tl_id)
             cycle_length = cycle_lengths.get(district_name, 120)
@@ -90,6 +103,11 @@ class BangaloreSCOSCAOptimizer:
                         ds_val = max([intersection_ds.get(l, 0.0) for l in phase_lanes])
                     else:
                         ds_val = 0.0
+                    # CoSiCoSt "adjust the priority stage": bias the ranking so the
+                    # phase feeding the currently active priority route gets a
+                    # larger share of the remaining green time.
+                    if tl_priority_lanes and any(l in tl_priority_lanes for l in lanes):
+                        ds_val += priority_boost
                     phase_ds_list.append((idx, ds_val))
                     
                 # Sort remaining phases by degree of saturation in descending order
@@ -151,14 +169,46 @@ class BangaloreSCOSCAOptimizer:
             
         return new_greentimes, new_previous_effective_cycles
 
-    def optimize_offsets(self, districts, critical_district_order, queue_lengths, lane_lengths, estimated_travel_times, cycle_lengths, current_offsets):
+    def optimize_offsets(self, districts, critical_district_order, queue_lengths, lane_lengths, estimated_travel_times, cycle_lengths, current_offsets, delay_by_tl=None):
         new_offsets = {}
+        delay_by_tl = delay_by_tl or {}
+        delay_weight = self.params.get("priority_route_delay_weight", 0.05)
         for district_name, tls in districts.items():
             cycle_length = cycle_lengths.get(district_name, 120)
-            
-            # Simple district ordering based on critical order
-            ordered_tls = critical_district_order.get(district_name, tls)
-            
+
+            # Static topological ordering from graph clustering (fallback / base order)
+            base_order = critical_district_order.get(district_name, tls)
+
+            # CoSiCoSt "establish a priority route": pick the propagation direction
+            # (front->back vs. back->front along base_order) that currently carries
+            # more real-time demand, instead of always trusting the static topology.
+            # The papers describe CoSiCoSt as optimizing "a weighted combination of
+            # delay and number of stops" — so the demand score here combines queued
+            # vehicle count (a stops proxy) with accumulated waiting time (delay),
+            # not queue count alone. Hysteresis (offset_thresh) avoids flapping
+            # direction on marginal gaps.
+            congestion_by_tl = {
+                tl: sum(queue_lengths.get(tl, {}).values()) + delay_weight * delay_by_tl.get(tl, 0.0)
+                for tl in base_order
+            }
+            half = max(1, len(base_order) // 2)
+            front_congestion = sum(congestion_by_tl.get(tl, 0) for tl in base_order[:half])
+            back_congestion = sum(congestion_by_tl.get(tl, 0) for tl in base_order[half:])
+            gap = abs(front_congestion - back_congestion)
+            prev_direction = self._priority_direction.get(district_name, "forward")
+            if gap > self.params.get("offset_thresh", 0.5):
+                direction = "forward" if front_congestion >= back_congestion else "reverse"
+            else:
+                direction = prev_direction
+            self._priority_direction[district_name] = direction
+
+            ordered_tls = base_order if direction == "forward" else list(reversed(base_order))
+
+            # Record the priority stage's next hop per intersection, consumed by
+            # optimize_green_splits to boost the phase serving this direction.
+            for idx in range(len(ordered_tls) - 1):
+                self._priority_next_tl[ordered_tls[idx]] = ordered_tls[idx + 1]
+
             # Set offset for first intersection to 0
             new_offsets[ordered_tls[0]] = 0
             

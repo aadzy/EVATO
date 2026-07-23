@@ -105,8 +105,19 @@ class BangaloreIntersection:
             pressures.append(pressure)
         return pressures
 
-    def apply_tl_programme(self, greens, yellow_duration):
+    def apply_tl_programme(self, greens, yellow_duration, extension=0, gap_thresh=None, min_green_ratio=1.0, min_green_floor=5):
+        # CoSiCoSt's local intersection controller keeps autonomy to both
+        # extend a phase (if vehicles are still present near the end of
+        # green) AND terminate it early past a "mandatory minimum green"
+        # once demand is served, handing the freed time to the next stage
+        # ("Online Split Optimizer" — the papers describe both halves, not
+        # just extension). We realize this as a SUMO actuated program with
+        # minDur = mandatory minimum green (a fraction of the computed
+        # split, floored at min_green_floor) and maxDur = computed split +
+        # extension, instead of a rigid static program, whenever
+        # extension > 0 or min_green_ratio < 1.0.
         phases = []
+        is_actuated = extension > 0 or min_green_ratio < 1.0
         for idx, g in enumerate(greens):
             gstate = (
                 self.green_states[idx]
@@ -118,13 +129,64 @@ class BangaloreIntersection:
                 if idx < len(self.yellow_states)
                 else "y" * len(gstate)
             )
-            phases.append(traci.trafficlight.Phase(int(g), gstate))
-            phases.append(traci.trafficlight.Phase(yellow_duration, ystate))
-            
+            green_dur = int(g)
+            if is_actuated:
+                min_dur = max(min_green_floor, int(green_dur * min_green_ratio))
+                min_dur = min(min_dur, green_dur)
+                max_dur = green_dur + max(0, int(extension))
+            else:
+                min_dur = green_dur
+                max_dur = green_dur
+            phases.append(
+                traci.trafficlight.Phase(green_dur, gstate, minDur=min_dur, maxDur=max_dur)
+            )
+            phases.append(
+                traci.trafficlight.Phase(yellow_duration, ystate, minDur=yellow_duration, maxDur=yellow_duration)
+            )
+
+        program_type = (
+            traci.tc.TRAFFICLIGHT_TYPE_ACTUATED if is_actuated else traci.tc.TRAFFICLIGHT_TYPE_STATIC
+        )
+        sub_parameter = {"max-gap": str(gap_thresh)} if (program_type == traci.tc.TRAFFICLIGHT_TYPE_ACTUATED and gap_thresh is not None) else {}
         logic = traci.trafficlight.Logic(
             programID=f"program_fixed_{self.tl_id}",
-            type=traci.tc.TRAFFICLIGHT_TYPE_STATIC,
+            type=program_type,
             currentPhaseIndex=0,
             phases=phases,
+            subParameter=sub_parameter,
+        )
+        traci.trafficlight.setProgramLogic(self.tl_id, logic)
+
+    def apply_actuated_fallback_programme(self, min_green, max_green, yellow_duration, gap_thresh=None):
+        # CoSiCoSt step 10: fallback mode is "Full Vehicle Actuation" when the
+        # central data/comms link is unavailable. Each intersection reverts to
+        # a locally-actuated program (min/max green per phase) so it keeps
+        # cycling sensibly without needing input from the district optimizer.
+        phases = []
+        for idx in range(len(self.phases)):
+            gstate = (
+                self.green_states[idx]
+                if idx < len(self.green_states)
+                else "G" * max(1, len(self.phases))
+            )
+            ystate = (
+                self.yellow_states[idx]
+                if idx < len(self.yellow_states)
+                else "y" * len(gstate)
+            )
+            phases.append(
+                traci.trafficlight.Phase(min_green, gstate, minDur=min_green, maxDur=max_green)
+            )
+            phases.append(
+                traci.trafficlight.Phase(yellow_duration, ystate, minDur=yellow_duration, maxDur=yellow_duration)
+            )
+
+        sub_parameter = {"max-gap": str(gap_thresh)} if gap_thresh is not None else {}
+        logic = traci.trafficlight.Logic(
+            programID=f"program_fallback_{self.tl_id}",
+            type=traci.tc.TRAFFICLIGHT_TYPE_ACTUATED,
+            currentPhaseIndex=0,
+            phases=phases,
+            subParameter=sub_parameter,
         )
         traci.trafficlight.setProgramLogic(self.tl_id, logic)

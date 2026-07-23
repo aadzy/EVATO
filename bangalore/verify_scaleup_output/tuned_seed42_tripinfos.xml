@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-07-23T10:30:27.434006+05:30 by Eclipse SUMO sumo 1.27.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.net.xml.gz"/>
+        <route-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.passenger.trips.xml"/>
+        <additional-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.poly.xml.gz,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\output.add.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\verify_scaleup_output\tuned_seed42_tripinfos.xml"/>
+        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\verify_scaleup_output\tuned_seed42_stats.xml"/>
+    </output>
+
+    <time>
+        <step-length value="0.25"/>
+    </time>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+        <time-to-teleport value="-1"/>
+        <tls.actuated.jam-threshold value="30"/>
+    </processing>
+
+    <routing>
+        <device.rerouting.adaptation-steps value="18"/>
+        <device.rerouting.adaptation-interval value="10"/>
+    </routing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="60203"/>
+    </traci_server>
+
+    <random_number>
+        <seed value="42"/>
+    </random_number>
+
+    <gui_only>
+        <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.view.xml"/>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+    <tripinfo id="veh39" depart="14.75" departLane="130639060#1_0" departPos="5.10" departSpeed="12.73" departDelay="0.23" arrival="75.50" arrivalLane="553988546#14_1" arrivalPos="0.20" arrivalSpeed="25.40" duration="60.75" routeLength="1039.80" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="7.71" rerouteNo="1" devices="tripinfo_veh39 routing_veh39" vType="veh_passenger" speedFactor="0.92" vaporized=""/>
+    <tripinfo id="veh60" depart="22.50" departLane="-1098174319#1_0" departPos="5.10" departSpeed="13.07" departDelay="0.16" arrival="77.50" arrivalLane="688644877#5_0" arrivalPos="22.16" arrivalSpeed="11.16" duration="55.00" routeLength="645.03" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="9.58" rerouteNo="1" devices="tripinfo_veh60 routing_veh60" vType="veh_passenger" speedFactor="0.94" vaporized=""/>
+    <tripinfo id="veh0" depart="0.00" departLane="147575141#0_0" departPos="5.10" departSpeed="13.17" departDelay="0.00" arrival="94.00" arrivalLane="-1156494507#1_0" arrivalPos="112.78" arrivalSpeed="13.14" duration="94.00" routeLength="1034.96" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="11.98" rerouteNo="1" devices="tripinfo_veh0 routing_veh0" vType="veh_passenger" speedFactor="0.95" vaporized=""/>
+    <tripinfo id="veh2" depart="0.75" departLane="40692576#1_1" departPos="5.10" departSpeed="27.78" departDelay="0.01" arrival="97.25" arrivalLane="-147575181#2_0" arrivalPos="15.12" arrivalSpeed="14.14" duration="96.50" routeLength="1949.51" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="15.87" rerouteNo="1" devices="tripinfo_veh2 routing_veh2" vType="veh_passenger" speedFactor="1.16" vaporized=""/>
+    <tripinfo id="veh104" depart="38.75" departLane="-995124328#2_0" departPos="3.21" departSpeed="7.07" departDelay="0.02" arrival="103.50" arrivalLane="38771628#5_0" arrivalPos="71.48" arrivalSpeed="17.05" duration="64.75" routeLength="992.24" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="15.59" rerouteNo="1" devices="tripinfo_veh104 routing_veh104" vType="veh_passenger" speedFactor="1.09" vaporized=""/>

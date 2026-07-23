@@ -1,20 +1,20 @@
+import argparse
 import os
 import sys
-import argparse
 from datetime import datetime
+from pathlib import Path
 import warnings
 
-# Add src to python path to import sumoITScontrol modules correctly
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+BASE_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = BASE_DIR / "src"
+# Add the project root and src directory to python path so the demo works from any cwd
+for path in (BASE_DIR, SRC_DIR):
+    if path.exists() and str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
-os.environ["QT_X11_NO_MITSHM"] = "1"
-os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
-os.environ["DYLD_LIBRARY_PATH"] = "/opt/homebrew/opt/mesa/lib:" + os.environ.get("DYLD_LIBRARY_PATH", "")
-os.environ["FONTCONFIG_FILE"] = "/opt/X11/etc/X11/fontconfig/fonts.conf"
-os.environ["FONTCONFIG_PATH"] = "/opt/X11/etc/X11/fontconfig"
-os.environ["PROJ_LIB"] = "/Library/Frameworks/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/framework/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/share/proj"
-os.environ["PROJ_DATA"] = "/Library/Frameworks/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/framework/EclipseSUMO.framework/Versions/1.27.0/EclipseSUMO/share/proj"
+SUMO_HOME = os.environ.get("SUMO_HOME", "D:\\")
+os.environ["PROJ_LIB"] = os.path.join(SUMO_HOME, "share", "proj")
+os.environ["PROJ_DATA"] = os.path.join(SUMO_HOME, "share", "proj")
 import traci
 
 warnings.filterwarnings("ignore")
@@ -23,47 +23,64 @@ from bangalore.parser import BangaloreNetworkParser
 from bangalore.graph_builder import BangaloreGraphBuilder
 from bangalore.scosca_controller import BangaloreSCOSCA
 
+
+def _resolve_default_config_file() -> Path:
+    candidates = [
+        BASE_DIR / "Bangalore_Map" / "osm.sumocfg",
+        BASE_DIR / "Bangalore_Map" / "osm.sumocfg.xml",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def _resolve_default_network_file() -> Path:
+    candidates = [
+        BASE_DIR / "Bangalore_Map" / "osm.net.xml.gz",
+        BASE_DIR / "Bangalore_Map" / "osm.net.xml",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+DEFAULT_CONFIG_FILE = _resolve_default_config_file()
+DEFAULT_NETWORK_FILE = _resolve_default_network_file()
+
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="Run Bangalore True SCOSCA Simulation.")
 parser.add_argument("--headless", action="store_true", help="Run SUMO in headless mode")
-parser.add_argument("--gui-delay", type=int, default=100, help="Delay in milliseconds between GUI steps")
 parser.add_argument("--duration", type=int, default=3600, help="Simulation duration in seconds")
+parser.add_argument("--seed", type=int, default=42, help="Random seed for SUMO")
 args, unknown = parser.parse_known_args()
 
 ############## PARAMETERS
 simulation_parameters = {
-    "sumo_config_file": "./Bangalore_Map/osm.sumocfg",
+    "sumo_config_file": str(DEFAULT_CONFIG_FILE),
+    "network_file": str(DEFAULT_NETWORK_FILE),
     "duration_sec": args.duration,
     "time_step": 0.25,
-    "sumo_random_seed": 42,
+    "sumo_random_seed": args.seed,
 }
 
 # Determine SUMO command
+SUMO_BINARY = "sumo" if args.headless else "sumo-gui"
+SUMO_CMD = [
+    SUMO_BINARY,
+    "-c",
+    simulation_parameters["sumo_config_file"],
+    "--start",
+    "--quit-on-end",
+    "--time-to-teleport",
+    "-1",
+    "--seed",
+    str(simulation_parameters["sumo_random_seed"]),
+]
+
 if args.headless:
-    SUMO_BINARY = "/Users/sachindev/sumo-env/bin/sumo"
-    SUMO_CMD = [
-        SUMO_BINARY,
-        "-c",
-        simulation_parameters["sumo_config_file"],
-        "--time-to-teleport",
-        "-1",
-        "--seed",
-        str(simulation_parameters["sumo_random_seed"]),
-    ]
-else:
-    SUMO_BINARY = "/Applications/SUMO sumo-gui.app/Contents/MacOS/SUMO sumo-gui"
-    SUMO_CMD = [
-        SUMO_BINARY,
-        "-c",
-        simulation_parameters["sumo_config_file"],
-        "--start",
-        "--delay",
-        str(args.gui_delay),
-        "--time-to-teleport",
-        "-1",
-        "--seed",
-        str(simulation_parameters["sumo_random_seed"]),
-    ]
+    SUMO_CMD = ["sumo"] + SUMO_CMD[1:]
 
 def main():
     print("==================================================")
@@ -71,7 +88,7 @@ def main():
     print("==================================================")
     
     # 1. Parse network file
-    net_path = "./Bangalore_Map/osm.net.xml.gz"
+    net_path = simulation_parameters["network_file"]
     print(f"Parsing network file: {net_path}...")
     parser_obj = BangaloreNetworkParser(net_path)
     
@@ -96,6 +113,16 @@ def main():
         "ds_upper_val": 0.925,
         "ds_lower_val": 0.875,
         "measurement_period": int(1 / simulation_parameters["time_step"]),
+        # CoSiCoSt-alignment fine-tuning (see bangalore/optimizer.py & intersection.py):
+        "priority_stage_boost": 5.0,        # extra DS-equivalent weight for the phase serving the current priority route
+        "priority_route_delay_weight": 0.05, # weight of accumulated waiting-time vs. queue count in priority-route scoring
+        "actuation_extension_sec": 5,        # bounded local green extension (Online Split Optimizer) if stop-line still occupied
+        "actuation_min_green_ratio": 0.5,    # mandatory-minimum-green fraction of the computed split before early termination is allowed
+        "actuation_min_green_floor": 5,      # absolute floor (s) under which a phase is never gapped out early
+        "actuation_gap_thresh": 3.0,         # seconds of no detector actuation before a green phase gaps out
+        "fallback_missing_cycles": 3,        # consecutive cycles of missing detector/comms data before a district falls back
+        "fallback_min_green": 10,            # min green per phase while in Full Vehicle Actuation fallback
+        "fallback_max_green": 45,            # max green per phase while in Full Vehicle Actuation fallback
     }
     
     controller = BangaloreSCOSCA(scosca_params, parser_obj, graph_builder, initial_cycle_length=120)
@@ -105,12 +132,6 @@ def main():
     print("Command:", " ".join(SUMO_CMD))
     traci.start(SUMO_CMD, numRetries=400)
     print("TraCI connected successfully!")
-    
-    # Allow GUI to load completely
-    if not args.headless:
-        import time
-        print("Waiting 5 seconds for SUMO GUI to initialize...")
-        time.sleep(5.0)
         
     # Initialize lane lengths and simulator tools
     controller.init_simulation()
@@ -122,9 +143,6 @@ def main():
     try:
         for step in range(total_steps):
             traci.simulationStep()
-            if not args.headless:
-                import time
-                time.sleep(args.gui_delay / 1000.0)
             current_time = traci.simulation.getCurrentTime()
             controller.execute_control(current_time)
             

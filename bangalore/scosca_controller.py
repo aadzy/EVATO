@@ -42,6 +42,7 @@ class BangaloreSCOSCA:
             "control_counter": 0,
             "update_counter": {d: 0 for d in self.districts},
             "last_cycle_update": {d: 0 for d in self.districts},
+            "district_failure_streak": {d: 0 for d in self.districts},
             "cycle_lengths": {d: initial_cycle_length for d in self.districts},
             "previous_effective_cycles": {
                 i.tl_id: initial_cycle_length - 3 * len(i.phases) for i in self.intersections
@@ -54,7 +55,9 @@ class BangaloreSCOSCA:
             },
             "history_cycle_lengths": [],
             "history_greentimes": [],
-            "history_offsets": []
+            "history_offsets": [],
+            "history_priority_direction": [],
+            "history_fallback_events": []
         }
         
         # Store lane lengths and speed limits
@@ -92,7 +95,15 @@ class BangaloreSCOSCA:
         return False
 
     def execute_evato_override(self, current_time):
-        # EVATO emergency override logic (to be extended in next phase)
+        # EVATO emergency override logic (to be extended in next phase).
+        # Extension seam: a future preemption pass can reuse
+        # BangaloreIntersection.apply_tl_programme(..., extension=...) and
+        # apply_actuated_fallback_programme(...) as the primitives for forcing
+        # a hold/extend or early-terminate on the emergency vehicle's route,
+        # and BangaloreSCOSCAOptimizer.get_priority_next_tl(...) /
+        # graph_builder.graph[...]["travel_time_to"] for propagating a green
+        # corridor along the vehicle's path, the same way the priority-route
+        # offset coordination does today.
         print(f"[{current_time}] EVATO Override active: prioritizing emergency corridors!")
         # For now, if override is active, we trigger standard green corridors or hold green signals
         pass
@@ -105,11 +116,29 @@ class BangaloreSCOSCA:
             if not greens:
                 continue
                 
-            # Apply phases/green program
-            intersection.apply_tl_programme(greens, yellow_duration=3)
+            # Apply phases/green program. CoSiCoSt's local "Online Split
+            # Optimizer": let each phase extend by a small bounded increment
+            # if vehicles are still present at the stop-line near the end of
+            # the computed green, OR terminate early past a mandatory
+            # minimum once demand is served, instead of a rigid static
+            # duration for the full computed split either way.
+            intersection.apply_tl_programme(
+                greens,
+                yellow_duration=3,
+                extension=self.params.get("actuation_extension_sec", 0),
+                gap_thresh=self.params.get("actuation_gap_thresh"),
+                min_green_ratio=self.params.get("actuation_min_green_ratio", 1.0),
+                min_green_floor=self.params.get("actuation_min_green_floor", 5),
+            )
             
-            # Apply offset shift
+            # Apply offset shift. The branches below assume at least two green
+            # phases (they index backwards from len(greens)*2); a single-phase
+            # intersection has nothing meaningful to offset-shift anyway, so
+            # skip rather than compute a negative/out-of-range phase index.
             shift = int(offsets.get(tl_id, 0))
+            if len(greens) < 2:
+                traci.trafficlight.setPhase(tl_id, 0)
+                continue
             if shift == 0:
                 traci.trafficlight.setPhase(tl_id, 0)
             elif shift < 3:
@@ -168,21 +197,27 @@ class BangaloreSCOSCA:
                     # 2. Gather Traffic State Metrics
                     queue_lengths = {}
                     degree_of_sat = {}
-                    
+                    delay_by_tl = {}
+                    district_had_error = False
+
                     for tl_id in tls:
                         intersection = next(i for i in self.intersections if i.tl_id == tl_id)
                         queue_lengths[tl_id] = {}
                         degree_of_sat[tl_id] = {}
-                        
-                        # Fetch metrics using collector
+
+                        # Fetch metrics using collector. CoSiCoSt's priority
+                        # route is a weighted combination of delay AND number
+                        # of stops, not queue count alone, so keep the
+                        # waiting-time signal for the offset optimizer below.
                         metrics = self.metrics_collector.get_metrics(intersection)
-                        
+                        delay_by_tl[tl_id] = metrics["waiting_time"]
+
                         # Get list of lanes for the intersection links
                         lane_candidates = []
                         for lanes in intersection.links.values():
                             lane_candidates.extend(lanes)
                         lane_candidates = list(set(lane_candidates))
-                        
+
                         for lane in lane_candidates:
                             try:
                                 veh = traci.lane.getLastStepVehicleNumber(lane)
@@ -190,9 +225,37 @@ class BangaloreSCOSCA:
                             except traci.TraCIException:
                                 veh = 0
                                 length = 10.0
+                                district_had_error = True
                             queue_lengths[tl_id][lane] = int(veh)
                             ds = min(1.0, float(veh) / max(1.0, (length / 7.0)))
                             degree_of_sat[tl_id][lane] = float(ds)
+
+                    # CoSiCoSt step 10: fall back to local Full Vehicle Actuation
+                    # for this district if its detector/comms data has been
+                    # unavailable for several consecutive control cycles, instead
+                    # of optimizing against stale/zeroed-out data.
+                    if district_had_error:
+                        self.measurement_data["district_failure_streak"][district_name] += 1
+                    else:
+                        self.measurement_data["district_failure_streak"][district_name] = 0
+
+                    district_degraded = (
+                        self.measurement_data["district_failure_streak"][district_name]
+                        >= self.params.get("fallback_missing_cycles", 3)
+                    )
+
+                    if district_degraded:
+                        for tl_id in tls:
+                            intersection = next(i for i in self.intersections if i.tl_id == tl_id)
+                            intersection.apply_actuated_fallback_programme(
+                                min_green=self.params.get("fallback_min_green", 10),
+                                max_green=self.params.get("fallback_max_green", 45),
+                                yellow_duration=3,
+                                gap_thresh=self.params.get("actuation_gap_thresh"),
+                            )
+                        self.measurement_data["update_counter"][district_name] += 1
+                        self.measurement_data["history_fallback_events"].append([current_time, district_name])
+                        continue
 
                     # 3. Optimize Cycle Length
                     update_cnt = self.measurement_data["update_counter"][district_name]
@@ -204,6 +267,17 @@ class BangaloreSCOSCA:
                         
                     # 4. Optimize Green Split Durations
                     if update_cnt != 0:
+                        # CoSiCoSt "adjust the priority stage": look up the lanes
+                        # leading towards the current priority route's next hop so
+                        # optimize_green_splits can bias that phase's allocation.
+                        priority_lanes = {}
+                        for tl_id in tls:
+                            next_tl = self.optimizer.get_priority_next_tl(tl_id)
+                            if next_tl:
+                                priority_lanes[tl_id] = self.graph_builder.graph.get(tl_id, {}).get(
+                                    "connecting_lanes_to", {}
+                                ).get(next_tl, [])
+
                         new_splits, new_effs = self.optimizer.optimize_green_splits(
                             [next(i for i in self.intersections if i.tl_id == tl_id) for tl_id in tls],
                             queue_lengths,
@@ -211,7 +285,8 @@ class BangaloreSCOSCA:
                             self.measurement_data["greentimes"],
                             self.measurement_data["cycle_lengths"],
                             self.measurement_data["previous_effective_cycles"],
-                            self.intersection_to_district
+                            self.intersection_to_district,
+                            priority_lanes
                         )
                         # Apply spillback prevention
                         adjusted_splits = self.coordinator.check_spillback_prevention(
@@ -237,10 +312,17 @@ class BangaloreSCOSCA:
                             self.lane_lengths,
                             estimated_travel_times,
                             self.measurement_data["cycle_lengths"],
-                            self.measurement_data["offsets"]
+                            self.measurement_data["offsets"],
+                            delay_by_tl
                         )
                         for tl_id in tls:
                             self.measurement_data["offsets"][tl_id] = new_offsets[tl_id]
+
+                        # Record the demand-responsive priority-route direction
+                        # chosen this round (CoSiCoSt "establish a priority route").
+                        self.measurement_data["history_priority_direction"].append(
+                            [current_time, district_name, self.optimizer._priority_direction.get(district_name)]
+                        )
                             
                     # Update counts and apply signal plans
                     self.measurement_data["update_counter"][district_name] += 1
