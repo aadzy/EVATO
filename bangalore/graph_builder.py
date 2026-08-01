@@ -43,6 +43,10 @@ class BangaloreGraphBuilder:
                 tl_outgoing_lanes[tl_id].add(to_lane)
                 edge_to_tl[from_edge] = tl_id
 
+        # Exposed for emergency-vehicle green-corridor preemption: map an
+        # edge a vehicle is on/approaching to the traffic light it feeds.
+        self.edge_to_tl = edge_to_tl
+
         # Trace neighbors for each traffic light
         for tl_id in tls_data.keys():
             # Outgoing edges are the starting edges for downstream search
@@ -199,3 +203,6 @@ class BangaloreGraphBuilder:
                         lanes.extend(self.graph[tl_id]["connecting_lanes_to"].get(neighbor, []))
                 connections[tl_id] = list(set(lanes))
         return connections
+
+    def get_edge_to_tl(self):
+        return self.edge_to_tl

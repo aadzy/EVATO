@@ -44,6 +44,7 @@ import matplotlib.pyplot as plt
 from bangalore.parser import BangaloreNetworkParser
 from bangalore.graph_builder import BangaloreGraphBuilder
 from bangalore.scosca_controller import BangaloreSCOSCA
+from report import new_run_record, save_run_record, stats_xml_metrics
 
 NET_FILE = str(BASE_DIR / "Bangalore_Map" / "osm.net.xml.gz")
 SUMO_CFG = str(BASE_DIR / "Bangalore_Map" / "osm.sumocfg")
@@ -349,6 +350,22 @@ def main():
 
     baseline_stats = parse_stats(baseline_stats_path)
     tuned_stats = parse_stats(tuned_stats_path)
+
+    # Persist standard-shaped run records (report.py) alongside this script's
+    # own bespoke plots, so baseline/tuned here can be compared against any
+    # other scosca_tuning run (or even a production-scale run) later.
+    baseline_record = new_run_record(
+        "scosca_tuning", "baseline", stats_xml_metrics(baseline_stats_path),
+        params=baseline_params, duration_sec=args.duration,
+    )
+    save_run_record(baseline_record)
+    tuned_record = new_run_record(
+        "scosca_tuning", "tuned", stats_xml_metrics(tuned_stats_path),
+        params=tuned_params, duration_sec=args.duration,
+    )
+    save_run_record(tuned_record)
+    print(f"Saved run records: {baseline_record['run_id']}, {tuned_record['run_id']}")
+    print("Run `python report.py --run-type scosca_tuning` anytime to compare against every tuning run ever done.")
 
     print("Rendering plots...")
     img_cycle = plot_cycle_lengths(baseline_md, tuned_md)

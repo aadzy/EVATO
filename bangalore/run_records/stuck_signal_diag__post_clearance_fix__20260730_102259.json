@@ -1,0 +1,18 @@
+{
+  "run_id": "stuck_signal_diag__post_clearance_fix__20260730_102259",
+  "run_type": "stuck_signal_diag",
+  "label": "post_clearance_fix",
+  "timestamp": "2026-07-30T10:22:59",
+  "duration_sec": 900,
+  "seed": null,
+  "params": {},
+  "metrics": {
+    "n_signals_never_green": 0,
+    "max_phase_gap_s": 106.0,
+    "n_signals_flagged_gap": 0,
+    "n_traffic_lights": 27
+  },
+  "notes": [
+    "stuck_threshold_sec=150.0"
+  ]
+}

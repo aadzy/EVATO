@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2026-07-30T10:35:25.931817+05:30 by Eclipse SUMO sumo 1.27.0
+<!-- generated on 2026-07-30T10:35:46.859929+05:30 by Eclipse SUMO sumo 1.27.0
 <sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -10,12 +10,17 @@
     </input>
 
     <output>
-        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\tripinfos.xml"/>
-        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\stats.xml"/>
+        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\ambulance_output\no_corridor_tripinfos.xml"/>
+        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\ambulance_output\no_corridor_stats.xml"/>
     </output>
+
+    <time>
+        <step-length value="0.25"/>
+    </time>
 
     <processing>
         <ignore-route-errors value="true"/>
+        <time-to-teleport value="-1"/>
         <tls.actuated.jam-threshold value="30"/>
     </processing>
 
@@ -31,8 +36,12 @@
     </report>
 
     <traci_server>
-        <remote-port value="58560"/>
+        <remote-port value="58571"/>
     </traci_server>
+
+    <random_number>
+        <seed value="42"/>
+    </random_number>
 
     <gui_only>
         <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.view.xml"/>
@@ -44,13 +53,13 @@
 -->
 
 <statistics xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/statistic_file.xsd">
-    <performance clockBegin="154666.20" clockEnd="154671.83" clockDuration="5.63" traciDuration="0.00" realTimeFactor="0.00" vehicleUpdatesPerSecond="0.00" personUpdatesPerSecond="0.00" begin="0.00" end="0.00" duration="0.00"/>
-    <vehicles loaded="2" inserted="0" running="0" waiting="0"/>
+    <performance clockBegin="154687.18" clockEnd="155031.23" clockDuration="344.05" traciDuration="70.34" realTimeFactor="2.62" vehicleUpdatesPerSecond="8445.72" personUpdatesPerSecond="0.00" begin="0.00" end="900.00" duration="900.00"/>
+    <vehicles loaded="2693" inserted="2410" running="1443" waiting="8"/>
     <teleports total="0" jam="0" yield="0" wrongLane="0"/>
-    <safety collisions="0" emergencyStops="0" emergencyBraking="0"/>
+    <safety collisions="0" emergencyStops="9" emergencyBraking="15"/>
     <persons loaded="0" running="0" jammed="0"/>
     <personTeleports total="0" abortWait="0" wrongDest="0"/>
-    <vehicleTripStatistics count="0" routeLength="0.00" speed="0.00" duration="0.00" waitingTime="0.00" timeLoss="0.00" departDelay="0.00" departDelayWaiting="-1.00" totalTravelTime="0.00" totalDepartDelay="0.00"/>
+    <vehicleTripStatistics count="967" routeLength="2808.66" speed="13.37" duration="218.18" waitingTime="27.10" timeLoss="67.95" departDelay="0.23" departDelayWaiting="-1.00" totalTravelTime="210983.75" totalDepartDelay="225.42"/>
     <pedestrianStatistics number="0" routeLength="0.00" duration="0.00" timeLoss="0.00"/>
     <rideStatistics number="0"/>
     <transportStatistics number="0"/>

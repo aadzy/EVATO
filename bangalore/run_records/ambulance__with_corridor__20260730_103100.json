@@ -1,0 +1,46 @@
+{
+  "run_id": "ambulance__with_corridor__20260730_103100",
+  "run_type": "ambulance",
+  "label": "with_corridor",
+  "timestamp": "2026-07-30T10:31:00",
+  "duration_sec": 900,
+  "seed": null,
+  "params": {
+    "adaptation_cycle": 30,
+    "adaptation_green": 10,
+    "green_thresh": 2,
+    "adaptation_offset": 1,
+    "offset_thresh": 0.5,
+    "min_cycle_length": 50,
+    "max_cycle_length": 180,
+    "ds_upper_val": 0.925,
+    "ds_lower_val": 0.875,
+    "measurement_period": 4,
+    "priority_stage_boost": 5.0,
+    "priority_route_delay_weight": 0.05,
+    "actuation_extension_sec": 5,
+    "actuation_min_green_ratio": 0.5,
+    "actuation_min_green_floor": 5,
+    "actuation_gap_thresh": 3.0,
+    "fallback_missing_cycles": 3,
+    "fallback_min_green": 10,
+    "fallback_max_green": 45,
+    "preemption_lookahead_edges": 2,
+    "preemption_transition_yellow_sec": 3,
+    "preemption_hold_refresh_sec": 5
+  },
+  "metrics": {
+    "avg_speed_mps": 13.107159208476101,
+    "avg_trip_duration_s": 220.65123456790124,
+    "avg_waiting_time_s": 29.0,
+    "avg_time_loss_s": 70.43241769547325,
+    "avg_route_length_m": 2791.0941358024693,
+    "timeloss_per_meter": 0.02430612428291276,
+    "n_trips_completed": 972,
+    "ambulance_travel_time_s": 129.75,
+    "preemption_events": 14
+  },
+  "notes": [
+    "route: 1159872651#0 -> 631197944#3 (25 edges)"
+  ]
+}
