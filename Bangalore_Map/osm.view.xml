@@ -1,5 +1,10 @@
 
 <viewsettings>
-    <scheme name="real world"/>
+    <scheme name="real world">
+        <!-- Draw each POI's name under its marker, so the colour-coded
+             hospital pins from hospitals.add.xml are labelled on the map. -->
+        <pois poiName_show="1" poiName_size="55" poiName_color="20,20,20"
+              poiName_bgColor="255,255,255,140" poiName_constantSize="1"/>
+    </scheme>
     <delay value="20"/>
 </viewsettings>

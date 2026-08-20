@@ -1,0 +1,82 @@
+<div class="evato-report"><style>
+:root {
+  --ink: #1b2027;
+  --ink-soft: #545b62;
+  --paper: #eef1f0;
+  --panel: #ffffff;
+  --line: #d7dbd8;
+  --accent: #b5691f;
+  --good: #1f8a5c;
+  --bad: #b23b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8e6df;
+    --ink-soft: #a4aaa7;
+    --paper: #14171a;
+    --panel: #1b1f22;
+    --line: #2b2f33;
+    --accent: #e0983f;
+    --good: #4cbf8e;
+    --bad: #e0827f;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e8e6df; --ink-soft: #a4aaa7; --paper: #14171a; --panel: #1b1f22;
+  --line: #2b2f33; --accent: #e0983f; --good: #4cbf8e; --bad: #e0827f;
+}
+:root[data-theme="light"] {
+  --ink: #1b2027; --ink-soft: #545b62; --paper: #eef1f0; --panel: #ffffff;
+  --line: #d7dbd8; --accent: #b5691f; --good: #1f8a5c; --bad: #b23b3b;
+}
+.evato-report { background: var(--paper); color: var(--ink);
+  font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5; padding: 2.5rem 1.5rem 4rem; }
+.evato-report .report-inner { max-width: 880px; margin: 0 auto; }
+.evato-report h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 2rem; font-weight: 600; margin: 0 0 0.4rem; text-wrap: balance; }
+.evato-report h2 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 1.3rem; font-weight: 600; margin: 2.4rem 0 0.6rem; padding-top: 1.4rem;
+  border-top: 1px solid var(--line); text-wrap: balance; }
+.evato-report h2:first-of-type { border-top: none; padding-top: 0; }
+.evato-report p { color: var(--ink-soft); max-width: 65ch; margin: 0 0 0.9rem; }
+.evato-report code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 3px; padding: 0.05em 0.35em; }
+.evato-report .report-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem;
+  font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 1.6rem; }
+.evato-report .report-meta span b { color: var(--ink); font-weight: 600; }
+.evato-report figure { margin: 1rem 0; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 1rem; }
+.evat-report figure img { max-width: 100%; display: block; margin: 0 auto; }
+.evato-report figcaption { color: var(--ink-soft); font-size: 0.85rem; margin-top: 0.6rem; max-width: 65ch; }
+.evato-report .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.evato-report table { border-collapse: collapse; width: 100%; background: var(--panel); font-variant-numeric: tabular-nums; }
+.evato-report th, .evato-report td { padding: 0.55rem 0.8rem; text-align: left;
+  border-bottom: 1px solid var(--line); vertical-align: top; }
+.evato-report thead th { font-size: 0.85rem; color: var(--ink-soft); font-weight: 600; }
+.evato-report thead .run-timestamp { display: block; font-weight: normal; font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.15rem; }
+.evato-report tr:last-child td { border-bottom: none; }
+.evato-report .meta-row td { color: var(--ink-soft); font-size: 0.85rem; font-style: italic; }
+.evato-report .metric-name { max-width: 260px; }
+.evato-report .metric-name b { display: block; }
+.evato-report .metric-desc { font-size: 0.78rem; color: var(--ink-soft); font-weight: normal; margin-top: 0.15rem; }
+.evato-report .delta-good { color: var(--good); font-size: 0.85rem; }
+.evato-report .delta-bad { color: var(--bad); font-size: 0.85rem; }
+.evato-report .delta-neutral { color: var(--ink-soft); font-size: 0.85rem; }
+.evato-report footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  font-size: 0.78rem; color: var(--ink-soft); }
+</style>
+<div class="report-inner">
+<h1>Run comparison: all runs</h1>
+<p></p>
+<div class="report-meta"><span>saved run records: <b>10</b></span></div>
+<div class="table-scroll"><table>
+<thead><tr><th>Metric</th><th>post_clearance_fix<span class="run-timestamp">2026-07-30T10:22:59</span></th><th>no_corridor<span class="run-timestamp">2026-07-30T10:31:00</span></th><th>with_corridor<span class="run-timestamp">2026-07-30T10:31:00</span></th><th>no_corridor<span class="run-timestamp">2026-07-30T10:49:52</span></th><th>with_corridor<span class="run-timestamp">2026-07-30T10:49:52</span></th><th>post_signal_cleanup<span class="run-timestamp">2026-08-04T12:23:38</span></th><th>no_corridor<span class="run-timestamp">2026-08-04T12:34:08</span></th><th>with_corridor<span class="run-timestamp">2026-08-04T12:34:08</span></th><th>no_corridor<span class="run-timestamp">2026-08-04T13:23:03</span></th><th>with_corridor<span class="run-timestamp">2026-08-04T13:23:03</span></th></tr></thead>
+<tbody>
+<tr class="meta-row"><td><i>run_type</i></td><td>stuck_signal_diag</td><td>ambulance</td><td>ambulance</td><td>ambulance</td><td>ambulance</td><td>stuck_signal_diag</td><td>ambulance</td><td>ambulance</td><td>ambulance</td><td>ambulance</td></tr><tr class="meta-row"><td><i>seed</i></td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td><td>None</td></tr><tr class="meta-row"><td><i>duration_sec</i></td><td>900</td><td>900</td><td>900</td><td>900</td><td>900</td><td>900</td><td>900</td><td>900</td><td>1500</td><td>1500</td></tr><tr><td class="metric-name"><b>Avg. speed</b><div class="metric-desc">Average vehicle speed across completed trips - higher means less time stuck at lights or in queues.</div></td><td>-</td><td>13.36 m/s</td><td>13.11 m/s</td><td>13.36 m/s</td><td>13.35 m/s</td><td>-</td><td>13.33 m/s</td><td>13.32 m/s</td><td>12.75 m/s</td><td>12.72 m/s</td></tr><tr><td class="metric-name"><b>Avg. trip duration</b><div class="metric-desc">Average wall-clock time to complete a trip, start to finish.</div></td><td>-</td><td>209.60 s</td><td>220.65 s</td><td>218.24 s</td><td>215.34 s</td><td>-</td><td>216.05 s</td><td>212.92 s</td><td>267.69 s</td><td>264.27 s</td></tr><tr><td class="metric-name"><b>Avg. waiting time</b><div class="metric-desc">Average time each vehicle spent stopped at signals - the number SCOSCA/CoSiCoSt tuning most directly targets.</div></td><td>-</td><td>23.99 s</td><td>29.00 s</td><td>27.12 s</td><td>25.22 s</td><td>-</td><td>24.85 s</td><td>25.07 s</td><td>42.97 s</td><td>47.29 s</td></tr><tr><td class="metric-name"><b>Avg. time loss</b><div class="metric-desc">Average delay vs. free-flow travel time per trip - captures stops AND slow-downs, not just full stops.</div></td><td>-</td><td>63.56 s</td><td>70.43 s</td><td>67.96 s</td><td>65.47 s</td><td>-</td><td>66.36 s</td><td>65.14 s</td><td>94.15 s</td><td>95.56 s</td></tr><tr><td class="metric-name"><b>Avg. route length</b><div class="metric-desc">Average trip distance - context only; if this shifts a lot between runs, raw time-based averages aren't a fair comparison (see time-loss/meter).</div></td><td>-</td><td>2,719.00 m</td><td>2,791.09 m</td><td>2,808.15 m</td><td>2,796.32 m</td><td>-</td><td>2,802.41 m</td><td>2,754.55 m</td><td>3,168.14 m</td><td>3,085.58 m</td></tr><tr><td class="metric-name"><b>Time loss / meter</b><div class="metric-desc">Time loss normalized by trip distance - the fair way to compare runs whose trip-length mix differs.</div></td><td>-</td><td>0.02 s/m</td><td>0.02 s/m</td><td>0.02 s/m</td><td>0.02 s/m</td><td>-</td><td>0.02 s/m</td><td>0.02 s/m</td><td>0.03 s/m</td><td>0.03 s/m</td></tr><tr><td class="metric-name"><b>Trips completed</b><div class="metric-desc">Number of vehicle trips that finished inside the simulated window - also affects whether other raw averages are comparable (throughput bias).</div></td><td>-</td><td>903 trips</td><td>972 trips</td><td>966 trips</td><td>962 trips</td><td>-</td><td>955 trips</td><td>912 trips</td><td>1,928 trips</td><td>1,836 trips</td></tr><tr><td class="metric-name"><b>Ambulance travel time</b><div class="metric-desc">Wall-clock time for the emergency vehicle to complete its corridor route - the headline number for the green-corridor feature.</div></td><td>-</td><td>164.25 s</td><td>129.75 s</td><td>165.25 s</td><td>159.25 s</td><td>-</td><td>353.00 s</td><td>-</td><td>153.50 s</td><td>59.75 s</td></tr><tr><td class="metric-name"><b>Preemption events</b><div class="metric-desc">Number of traffic-light preemption engage/release events triggered by the emergency vehicle - context, not itself good or bad.</div></td><td>-</td><td>0 events</td><td>14 events</td><td>0 events</td><td>12 events</td><td>-</td><td>0 events</td><td>5 events</td><td>0 events</td><td>6 events</td></tr><tr><td class="metric-name"><b>Signals never green</b><div class="metric-desc">Count of traffic lights that never showed a green state during the run - should always be 0; nonzero means a genuine controller bug.</div></td><td>0 signals</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0 signals<br><span class="delta-neutral">(=)</span></td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td class="metric-name"><b>Longest phase-change gap</b><div class="metric-desc">Longest time any single traffic light went without changing phase - a spike far beyond the configured cycle length indicates a stuck signal.</div></td><td>106.00 s</td><td>-</td><td>-</td><td>-</td><td>-</td><td>99.25 s<br><span class="delta-good">&#9660; -6.4%</span></td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td class="metric-name"><b>Signals flagged (long gap)</b><div class="metric-desc">Count of traffic lights whose longest phase-change gap exceeded the stuck-signal threshold used for that run.</div></td><td>0 signals</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0 signals<br><span class="delta-neutral">(=)</span></td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr><td class="metric-name"><b>Traffic lights checked</b><div class="metric-desc">Total number of traffic lights covered by this run - context for the two metrics above.</div></td><td>27 signals</td><td>-</td><td>-</td><td>-</td><td>-</td><td>20 signals</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+</tbody>
+</table></div>
+<p style="font-size:0.78rem">Percentages shown under each value compare it against the first (leftmost) run.</p>
+<footer>Generated by report.py - part of EVATO's shared run-reporting module.</footer>
+</div></div>

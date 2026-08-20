@@ -8,6 +8,10 @@ relying on a fleeting visual impression from the GUI.
 
 Usage:
     python diagnose_stuck_signals.py [--duration 900]
+    python diagnose_stuck_signals.py --validate   # also auto-generate a VAC
+                                                   # validation .md report
+                                                   # (see validation.py) from
+                                                   # this run's own log
 """
 
 import argparse
@@ -15,6 +19,7 @@ import os
 import sys
 import warnings
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,7 +38,8 @@ import traci
 from bangalore.parser import BangaloreNetworkParser
 from bangalore.graph_builder import BangaloreGraphBuilder
 from bangalore.scosca_controller import BangaloreSCOSCA
-from report import new_run_record, save_run_record
+from report import new_run_record, save_run_record, save_run_report_md
+from validation import capture_run_log, validate_vac_log, VALIDATION_REPORTS_DIR
 
 NET_FILE = str(BASE_DIR / "Bangalore_Map" / "osm.net.xml.gz")
 SUMO_CFG = str(BASE_DIR / "Bangalore_Map" / "osm.sumocfg")
@@ -51,15 +57,7 @@ SCOSCA_PARAMS = {
 }
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--duration", type=int, default=900)
-    parser.add_argument("--stuck_threshold_sec", type=float, default=150.0,
-                         help="flag a tl if it goes this long without a green-state change")
-    parser.add_argument("--label", type=str, default="run",
-                         help="tag for this run's saved record, e.g. 'before_fix'/'after_fix', so later comparisons are meaningful")
-    args = parser.parse_args()
-
+def _run(args):
     parser_obj = BangaloreNetworkParser(NET_FILE)
     graph_builder = BangaloreGraphBuilder(parser_obj)
     controller = BangaloreSCOSCA(SCOSCA_PARAMS, parser_obj, graph_builder, initial_cycle_length=120)
@@ -126,6 +124,7 @@ def main():
     for tl, gap in sorted(longest_gap.items(), key=lambda kv: -kv[1])[:10]:
         print(f"  {tl[:60]:60s}  longest_gap={gap:6.1f}s  distinct_states={len(states_seen[tl])}")
 
+    worst = sorted(longest_gap.items(), key=lambda kv: -kv[1])[:5]
     record = new_run_record(
         "stuck_signal_diag", args.label,
         metrics={
@@ -134,12 +133,43 @@ def main():
             "n_signals_flagged_gap": len(flagged),
             "n_traffic_lights": len(tl_ids),
         },
+        params=SCOSCA_PARAMS,
         duration_sec=args.duration,
-        notes=[f"stuck_threshold_sec={args.stuck_threshold_sec}"],
+        context={
+            "stuck_threshold_sec": args.stuck_threshold_sec,
+            "network_file": Path(NET_FILE).name,
+        },
+        notes=(
+            [f"Never green: {tl}" for tl in sorted(never_green_at_all)]
+            + [f"Worst phase-change gap: {tl} ({gap:.1f}s)" for tl, gap in worst]
+        ),
     )
     save_run_record(record)
+    save_run_report_md(record)
     print(f"\nSaved run record: {record['run_id']}")
     print("Run `python report.py --run-type stuck_signal_diag` anytime to compare against every diagnostic run ever done.")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--duration", type=int, default=900)
+    parser.add_argument("--stuck_threshold_sec", type=float, default=150.0,
+                         help="flag a tl if it goes this long without a green-state change")
+    parser.add_argument("--label", type=str, default="run",
+                         help="tag for this run's saved record, e.g. 'before_fix'/'after_fix', so later comparisons are meaningful")
+    parser.add_argument("--validate", action="store_true",
+                         help="capture this run's full output to a .log file and auto-generate a VAC validation .md report from it (validation.py)")
+    args = parser.parse_args()
+
+    if not args.validate:
+        _run(args)
+        return
+
+    log_path = VALIDATION_REPORTS_DIR / f"vac_run__{datetime.now():%Y%m%d_%H%M%S}.log"
+    with capture_run_log(log_path):
+        _run(args)
+    report_path, overall = validate_vac_log(log_path)
+    print(f"\nVAC validation: {'PASS' if overall else 'FAIL'} -> {report_path}")
 
 
 if __name__ == "__main__":

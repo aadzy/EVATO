@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-08-19T20:28:39.575362+05:30 by Eclipse SUMO sumo 1.27.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.net.xml.gz"/>
+        <route-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.passenger.trips.xml"/>
+        <additional-files value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.poly.xml.gz,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\output.add.xml,C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\hospitals.add.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\ambulance_output\stjohns_signalfix\no_corridor_tripinfos.xml"/>
+        <statistic-output value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\bangalore\ambulance_output\stjohns_signalfix\no_corridor_stats.xml"/>
+    </output>
+
+    <time>
+        <step-length value="0.25"/>
+    </time>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+        <time-to-teleport value="-1"/>
+        <tls.actuated.jam-threshold value="30"/>
+    </processing>
+
+    <routing>
+        <device.rerouting.adaptation-steps value="18"/>
+        <device.rerouting.adaptation-interval value="10"/>
+    </routing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="61455"/>
+    </traci_server>
+
+    <random_number>
+        <seed value="42"/>
+    </random_number>
+
+    <gui_only>
+        <gui-settings-file value="C:\Users\DELL\OneDrive\Desktop\sem4\SPD\sh_vacBase\EVATO\Bangalore_Map\osm.view.xml"/>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<statistics xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/statistic_file.xsd">
+    <performance clockBegin="4646.75" clockEnd="4938.72" clockDuration="291.97" traciDuration="92.80" realTimeFactor="2.05" vehicleUpdatesPerSecond="4910.69" personUpdatesPerSecond="0.00" begin="0.00" end="600.00" duration="600.00"/>
+    <vehicles loaded="1617" inserted="1610" running="1033" waiting="2"/>
+    <teleports total="0" jam="0" yield="0" wrongLane="0"/>
+    <safety collisions="0" emergencyStops="8" emergencyBraking="13"/>
+    <persons loaded="0" running="0" jammed="0"/>
+    <personTeleports total="0" abortWait="0" wrongDest="0"/>
+    <vehicleTripStatistics count="577" routeLength="2644.98" speed="13.60" duration="196.16" waitingTime="17.79" timeLoss="54.55" departDelay="0.27" departDelayWaiting="-1.00" totalTravelTime="113186.25" totalDepartDelay="157.97"/>
+    <pedestrianStatistics number="0" routeLength="0.00" duration="0.00" timeLoss="0.00"/>
+    <rideStatistics number="0"/>
+    <transportStatistics number="0"/>
+</statistics>

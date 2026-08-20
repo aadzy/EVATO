@@ -11,13 +11,11 @@ Usage:
 
 Produces (in --out, default ./verify_output):
     - baseline_stats.xml / tuned_stats.xml (SUMO aggregate trip statistics)
-    - verification_report.html (self-contained dashboard with all plots)
+    - verification_report.md (comparison table + all plots as .png files)
 """
 
 import argparse
 import copy
-import io
-import base64
 import os
 import sys
 import time
@@ -44,7 +42,10 @@ import matplotlib.pyplot as plt
 from bangalore.parser import BangaloreNetworkParser
 from bangalore.graph_builder import BangaloreGraphBuilder
 from bangalore.scosca_controller import BangaloreSCOSCA
-from report import new_run_record, save_run_record, stats_xml_metrics
+from report import (
+    new_run_record, save_run_record, save_run_report_md, stats_xml_metrics,
+    render_comparison_markdown, RUN_REPORTS_DIR,
+)
 
 NET_FILE = str(BASE_DIR / "Bangalore_Map" / "osm.net.xml.gz")
 SUMO_CFG = str(BASE_DIR / "Bangalore_Map" / "osm.sumocfg")
@@ -209,14 +210,16 @@ def parse_stats(stats_path):
     return {k: float(el.get(k, 0.0)) for k in keys}
 
 
-def fig_to_data_uri(fig):
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=110, bbox_inches="tight")
+def save_fig(fig, path):
+    """Charts are written as real .png files next to the report rather than
+    embedded as data URIs, so the Markdown report can reference them and
+    stays readable/diffable as plain text."""
+    fig.savefig(path, format="png", dpi=110, bbox_inches="tight")
     plt.close(fig)
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    return Path(path).name
 
 
-def plot_cycle_lengths(baseline_md, tuned_md):
+def plot_cycle_lengths(baseline_md, tuned_md, path):
     fig, ax = plt.subplots(figsize=(8, 4))
     for district in tuned_md["cycle_lengths"].keys():
         b_times = [t for t, d in [(h[0], h[1]) for h in baseline_md["history_cycle_lengths"]]]
@@ -229,10 +232,10 @@ def plot_cycle_lengths(baseline_md, tuned_md):
     ax.set_ylabel("Cycle length (s)")
     ax.set_title("DOS-driven cycle length: baseline vs. tuned")
     ax.legend(fontsize=8)
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
-def plot_priority_direction(tuned_md):
+def plot_priority_direction(tuned_md, path):
     fig, ax = plt.subplots(figsize=(8, 3))
     by_district = {}
     for t, district, direction in tuned_md["history_priority_direction"]:
@@ -247,10 +250,10 @@ def plot_priority_direction(tuned_md):
     ax.set_xlabel("Simulation time (s)")
     ax.set_title("Demand-responsive priority-route direction over time (tuned run)")
     ax.legend(fontsize=8)
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
-def plot_greentimes(baseline_md, tuned_md, tl_id):
+def plot_greentimes(baseline_md, tuned_md, tl_id, path):
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.5), sharey=True)
     for ax, md, title in ((axes[0], baseline_md, "baseline"), (axes[1], tuned_md, "tuned")):
         times = [h[0] / 1000.0 for h in md["history_greentimes"]]
@@ -267,10 +270,10 @@ def plot_greentimes(baseline_md, tuned_md, tl_id):
     axes[0].set_ylabel("Green time (s)")
     axes[1].legend(fontsize=8)
     fig.suptitle("Per-phase green split allocation for a representative intersection")
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
-def plot_stats_comparison(baseline_stats, tuned_stats):
+def plot_stats_comparison(baseline_stats, tuned_stats, path):
     metrics = ["speed", "duration", "waitingTime", "timeLoss"]
     labels = ["Avg speed (m/s)", "Avg trip duration (s)", "Avg waiting time (s)", "Avg time loss (s)"]
     fig, axes = plt.subplots(1, len(metrics), figsize=(12, 3.5))
@@ -279,10 +282,10 @@ def plot_stats_comparison(baseline_stats, tuned_stats):
         ax.bar(["baseline", "tuned"], vals, color=["#888", "#2b7"])
         ax.set_title(label, fontsize=9)
     fig.suptitle("Aggregate SUMO trip statistics: baseline vs. tuned")
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
-def plot_phase_realized_durations(baseline_trace, tuned_trace, tl_id):
+def plot_phase_realized_durations(baseline_trace, tuned_trace, tl_id, path):
     fig, ax = plt.subplots(figsize=(8, 3.5))
     for trace, label, style in ((baseline_trace.get(tl_id, []), "baseline (static)", "--"),
                                  (tuned_trace.get(tl_id, []), "tuned (actuated)", "-")):
@@ -292,10 +295,10 @@ def plot_phase_realized_durations(baseline_trace, tuned_trace, tl_id):
     ax.set_ylabel("Realized phase duration (s)")
     ax.set_title(f"Realized green/yellow phase durations at {tl_id}\n(variability = gap-extension in action)")
     ax.legend(fontsize=8)
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
-def plot_fallback_events(fault_md, fault_district, fault_window):
+def plot_fallback_events(fault_md, fault_district, fault_window, path):
     fig, ax = plt.subplots(figsize=(8, 2.5))
     events = [t / 1000.0 for t, d in fault_md["history_fallback_events"] if d == fault_district]
     ax.axvspan(fault_window[0], fault_window[1], color="red", alpha=0.15, label="simulated data outage")
@@ -306,7 +309,7 @@ def plot_fallback_events(fault_md, fault_district, fault_window):
     ax.set_xlabel("Simulation time (s)")
     ax.set_title(f"Full Vehicle Actuation fallback events for {fault_district}")
     ax.legend(fontsize=8)
-    return fig_to_data_uri(fig)
+    return save_fig(fig, path)
 
 
 def main():
@@ -357,77 +360,101 @@ def main():
     baseline_record = new_run_record(
         "scosca_tuning", "baseline", stats_xml_metrics(baseline_stats_path),
         params=baseline_params, duration_sec=args.duration,
+        context={"scenario": "priority route / actuation / fallback all DISABLED (old behavior)"},
     )
     save_run_record(baseline_record)
+    save_run_report_md(baseline_record)
     tuned_record = new_run_record(
         "scosca_tuning", "tuned", stats_xml_metrics(tuned_stats_path),
         params=tuned_params, duration_sec=args.duration,
+        context={"scenario": "all CoSiCoSt-alignment features ENABLED"},
     )
     save_run_record(tuned_record)
+    save_run_report_md(tuned_record)
     print(f"Saved run records: {baseline_record['run_id']}, {tuned_record['run_id']}")
     print("Run `python report.py --run-type scosca_tuning` anytime to compare against every tuning run ever done.")
 
     print("Rendering plots...")
-    img_cycle = plot_cycle_lengths(baseline_md, tuned_md)
-    img_priority = plot_priority_direction(tuned_md)
-    img_splits = plot_greentimes(baseline_md, tuned_md, tracked_tls[0])
-    img_stats = plot_stats_comparison(baseline_stats, tuned_stats)
-    img_phase_durations = plot_phase_realized_durations(baseline_trace, tuned_trace, tracked_tls[0])
-    img_fallback = plot_fallback_events(fault_md, fault_district, fault_window)
+    img_cycle = plot_cycle_lengths(baseline_md, tuned_md, out_dir / "cycle_lengths.png")
+    img_priority = plot_priority_direction(tuned_md, out_dir / "priority_direction.png")
+    img_splits = plot_greentimes(baseline_md, tuned_md, tracked_tls[0], out_dir / "green_splits.png")
+    img_stats = plot_stats_comparison(baseline_stats, tuned_stats, out_dir / "stats_comparison.png")
+    img_phase_durations = plot_phase_realized_durations(
+        baseline_trace, tuned_trace, tracked_tls[0], out_dir / "phase_durations.png")
+    img_fallback = plot_fallback_events(
+        fault_md, fault_district, fault_window, out_dir / "fallback_events.png")
 
     fallback_events = [e for e in fault_md["history_fallback_events"] if e[1] == fault_district]
+    fallback_list = (
+        ", ".join(f"t={e[0]/1000.0:.1f}s" for e in fallback_events)
+        or "**none triggered - investigate**"
+    )
 
-    html = f"""<h1>SCOSCA CoSiCoSt-alignment verification</h1>
-<p>Baseline = priority-route boost / actuation extension / fallback all disabled (old behavior).
-Tuned = all three fine-tuning features enabled. Same seed, same duration ({args.duration}s), same network.</p>
+    comparison_md = render_comparison_markdown(
+        [baseline_record, tuned_record],
+        title="SCOSCA CoSiCoSt-alignment verification",
+        description=(
+            "Baseline = priority-route boost / actuation extension / fallback all disabled (old "
+            f"behavior). Tuned = all three fine-tuning features enabled. Same seed, same duration "
+            f"({args.duration}s), same network."
+        ),
+    )
 
-<h2>1. Priority route + priority-stage boost</h2>
-<img src="{img_priority}" style="max-width:100%">
-<p>Direction flips between "forward" and "reverse" as real-time congestion shifts across the district's
-corridor &mdash; proof the offset propagation order is demand-responsive, not the old static topological order.</p>
-<img src="{img_splits}" style="max-width:100%">
-<p>Per-phase green-time allocation over time for a representative intersection. In the tuned run the
-phase aligned with the current priority route gets systematically more green than in the baseline.</p>
+    charts_md = f"""
+## 1. Priority route + priority-stage boost
 
-<h2>2. Local Online Split Optimizer (gap-extension)</h2>
-<img src="{img_phase_durations}" style="max-width:100%">
-<p>Baseline uses a rigid static program: realized phase durations should exactly match planned splits
+![Priority-route direction over time]({img_priority})
+
+Direction flips between "forward" and "reverse" as real-time congestion shifts across the district's
+corridor - proof the offset propagation order is demand-responsive, not the old static topological order.
+
+![Per-phase green split allocation]({img_splits})
+
+Per-phase green-time allocation over time for a representative intersection. In the tuned run the
+phase aligned with the current priority route gets systematically more green than in the baseline.
+
+## 2. Local Online Split Optimizer (gap-extension)
+
+![Realized phase durations]({img_phase_durations})
+
+Baseline uses a rigid static program: realized phase durations should exactly match planned splits
 (flat/deterministic). Tuned uses SUMO's actuated program (min/max duration bound by
-<code>actuation_extension_sec</code>): realized durations vary step to step because green is
-extended when the stop-line is still occupied &mdash; direct evidence the gap-out mechanism is active.</p>
+`actuation_extension_sec`): realized durations vary step to step because green is
+extended when the stop-line is still occupied - direct evidence the gap-out mechanism is active.
 
-<h2>3. DOS-driven cycle length</h2>
-<img src="{img_cycle}" style="max-width:100%">
-<p>Cycle length still adapts to degree-of-saturation in both runs (steps 1-5/9 were already correct);
-shown here mainly to confirm the fine-tuning didn't regress this baseline behavior.</p>
+## 3. DOS-driven cycle length
 
-<h2>4. Fallback: Full Vehicle Actuation on simulated data loss</h2>
-<img src="{img_fallback}" style="max-width:100%">
-<p>Detector reads for district <code>{fault_district}</code> were monkeypatched to raise
-<code>TraCIException</code> during the shaded window ({fault_window[0]:.0f}s&ndash;{fault_window[1]:.0f}s),
-simulating a comms/detector outage. Fallback events recorded:
-{"<br>".join(f"t={e[0]/1000.0:.1f}s" for e in fallback_events) or "<b>none triggered &mdash; investigate</b>"}.
-The district should stop optimizing against stale data within
-<code>fallback_missing_cycles</code> cycles of the outage starting, and resume normal SCOSCA control
-once the outage window ends.</p>
+![DOS-driven cycle length]({img_cycle})
 
-<h2>5. Aggregate network-level impact</h2>
-<img src="{img_stats}" style="max-width:100%">
-<table border="1" cellpadding="4" style="border-collapse:collapse">
-<tr><th>Metric</th><th>Baseline</th><th>Tuned</th></tr>
-{"".join(f"<tr><td>{k}</td><td>{baseline_stats.get(k, 'n/a')}</td><td>{tuned_stats.get(k, 'n/a')}</td></tr>" for k in ["speed","duration","waitingTime","timeLoss","routeLength","departDelay"])}
-</table>
-<p><i>Note: this short run uses a shortened cycle length (min/max {BASE_PARAMS['min_cycle_length']}-{BASE_PARAMS['max_cycle_length']}s,
-vs. the production demo's 50-180s) purely so several district recompute cycles fit inside a short,
-TraCI-connection-stable run window. Aggregate network stats over this short window are illustrative,
-not a production benchmark &mdash; for that, rerun with production parameters over a full 3600s demand
-period.</i></p>
+Cycle length still adapts to degree-of-saturation in both runs (steps 1-5/9 were already correct);
+shown here mainly to confirm the fine-tuning didn't regress this baseline behavior.
+
+## 4. Fallback: Full Vehicle Actuation on simulated data loss
+
+![Fallback events]({img_fallback})
+
+Detector reads for district `{fault_district}` were monkeypatched to raise `TraCIException` during
+the shaded window ({fault_window[0]:.0f}s-{fault_window[1]:.0f}s), simulating a comms/detector
+outage. Fallback events recorded: {fallback_list}.
+The district should stop optimizing against stale data within `fallback_missing_cycles` cycles of
+the outage starting, and resume normal SCOSCA control once the outage window ends.
+
+## 5. Aggregate network-level impact
+
+![Aggregate trip statistics]({img_stats})
+
+> **Note:** this short run uses a shortened cycle length (min/max
+> {BASE_PARAMS['min_cycle_length']}-{BASE_PARAMS['max_cycle_length']}s, vs. the production demo's
+> 50-180s) purely so several district recompute cycles fit inside a short, TraCI-connection-stable
+> run window. Aggregate network stats over this short window are illustrative, not a production
+> benchmark - for that, rerun with production parameters over a full 3600s demand period.
 """
 
-    report_path = out_dir / "verification_report.html"
+    report_path = out_dir / "verification_report.md"
     with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(comparison_md + "\n" + charts_md)
     print(f"\nReport written to: {report_path}")
+    print(f"Per-run reports written to: {RUN_REPORTS_DIR}")
 
 
 if __name__ == "__main__":

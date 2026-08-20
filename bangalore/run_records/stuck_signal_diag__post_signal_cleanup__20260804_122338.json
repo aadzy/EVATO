@@ -1,0 +1,18 @@
+{
+  "run_id": "stuck_signal_diag__post_signal_cleanup__20260804_122338",
+  "run_type": "stuck_signal_diag",
+  "label": "post_signal_cleanup",
+  "timestamp": "2026-08-04T12:23:38",
+  "duration_sec": 900,
+  "seed": null,
+  "params": {},
+  "metrics": {
+    "n_signals_never_green": 0,
+    "max_phase_gap_s": 99.25,
+    "n_signals_flagged_gap": 0,
+    "n_traffic_lights": 20
+  },
+  "notes": [
+    "stuck_threshold_sec=150.0"
+  ]
+}
